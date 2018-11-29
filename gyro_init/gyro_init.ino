@@ -624,6 +624,7 @@
 // I2C address thus becomes 0x69.
 #define MPU6050_I2C_ADDRESS 0x69
 
+#define SWAP(x,y) swap = x; x = y; y = swap
 
 // Declaring an union for the registers and the axis values.
 // The byte order does not match the byte order of 
@@ -714,7 +715,7 @@ void loop()
  mpu_read_and_print(pin[2]);
  delay(50);
  mpu_read_and_print(pin[3]);
- delay(50);
+ delay(1000);
 }
 
 
@@ -792,7 +793,6 @@ void mpu_read_and_print(byte mpu_en_pin)
  // so the structure name like x_accel_l does no 
  // longer contain the lower byte.
  uint8_t swap;
- #define SWAP(x,y) swap = x; x = y; y = swap
 
  SWAP (accel_t_gyro.reg.x_accel_h, accel_t_gyro.reg.x_accel_l);
  SWAP (accel_t_gyro.reg.y_accel_h, accel_t_gyro.reg.y_accel_l);
@@ -801,6 +801,70 @@ void mpu_read_and_print(byte mpu_en_pin)
  SWAP (accel_t_gyro.reg.x_gyro_h, accel_t_gyro.reg.x_gyro_l);
  SWAP (accel_t_gyro.reg.y_gyro_h, accel_t_gyro.reg.y_gyro_l);
  SWAP (accel_t_gyro.reg.z_gyro_h, accel_t_gyro.reg.z_gyro_l);
+
+ unsigned long t_now = millis();
+ float FS_SEL = 131;
+
+
+ // Change raw data to degree
+//  float gyro_x = (accel_t_gyro.value.x_gyro - base_x_gyro)/FS_SEL;
+//  float gyro_y = (accel_t_gyro.value.y_gyro - base_y_gyro)/FS_SEL;
+//  float gyro_z = (accel_t_gyro.value.z_gyro - base_z_gyro)/FS_SEL;
+ float gyro_x = (accel_t_gyro.value.x_gyro)/FS_SEL;
+ float gyro_y = (accel_t_gyro.value.y_gyro)/FS_SEL;
+ float gyro_z = (accel_t_gyro.value.z_gyro)/FS_SEL;
+
+
+ // Save law acceleration data
+ float accel_x = accel_t_gyro.value.x_accel;
+ float accel_y = accel_t_gyro.value.y_accel;
+ float accel_z = accel_t_gyro.value.z_accel;
+
+ float RADIANS_TO_DEGREES = 180/3.14159;
+
+ float accel_angle_y = atan(-1*accel_x/sqrt(pow(accel_y,2) + pow(accel_z,2)))*RADIANS_TO_DEGREES;
+ float accel_angle_x = atan(accel_y/sqrt(pow(accel_x,2) + pow(accel_z,2)))*RADIANS_TO_DEGREES;
+ float accel_angle_z = 0;
+
+ float alpha = 0.96;
+ float angle_x = alpha*accel_t_gyro.value.x_gyro + (1.0 - alpha)*accel_angle_x;
+ float angle_y = alpha*accel_t_gyro.value.y_gyro + (1.0 - alpha)*accel_angle_y;
+ float angle_z = accel_t_gyro.value.z_gyro;
+
+
+ Serial.print(F("accel x,y,z: "));
+ Serial.print(accel_angle_x, 2);
+ Serial.print(F(", "));
+ Serial.print(accel_angle_y, 2);
+ Serial.print(F(", "));
+ Serial.print(accel_angle_z, 2);
+ Serial.println(F(""));
+
+
+ Serial.print(F("temperature: "));
+ dT = ( (double) accel_t_gyro.value.temperature + 12412.0) / 340.0;
+ Serial.print(dT, 3);
+ Serial.print(F(" degrees Celsius"));
+ Serial.println(F(""));
+
+
+ Serial.print(F("gyro x,y,z : "));
+ Serial.print(gyro_x, 2);
+ Serial.print(F(", "));
+ Serial.print(gyro_y, 2);
+ Serial.print(F(", "));
+ Serial.print(gyro_z, 2);
+ Serial.print(F(", "));
+ Serial.println(F(""));
+
+ Serial.print(F("angle x,y,z : "));
+ Serial.print(angle_x, 2);
+ Serial.print(F(", "));
+ Serial.print(angle_y, 2);
+ Serial.print(F(", "));
+ Serial.print(angle_z, 2);
+ Serial.print(F(", "));
+ Serial.println(F(""));
 
 
  // Print the raw acceleration values
