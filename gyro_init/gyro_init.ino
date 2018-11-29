@@ -672,6 +672,51 @@ byte pin[] = {2, 3, 4, 5};
 // then calculate it's size. Now if you add a pin it will automatically include it
 byte pinCount = sizeof(pin) / sizeof(pin[0]);
 
+void output_all_low()
+{
+   for (byte i = 0; i < pinCount; i++)
+   {
+      digitalWrite(pin[i], LOW);
+      delay(1);
+   }
+}
+
+void setup()
+{
+
+ for (byte i = 0; i < pinCount; i++)
+ {
+    pinMode(pin[i], OUTPUT);
+ }
+
+ Serial.begin(115200);
+ Serial.println(F("InvenSense MPU-6050"));
+//  Serial.println(F("June 2012"));
+
+ // Initialize the 'Wire' class for the I2C-bus.
+ Wire.begin();
+
+  for (byte i = 0; i < pinCount; i++)
+ {
+    mpu_initialize(pin[i]);
+ }
+
+}
+
+
+void loop()
+{
+ mpu_read_and_print(pin[0]);
+ delay(50);
+ mpu_read_and_print(pin[1]);
+ delay(50);
+ mpu_read_and_print(pin[2]);
+ delay(50);
+ mpu_read_and_print(pin[3]);
+ delay(50);
+}
+
+
 void mpu_initialize(byte mpu_en_pin)
 {
   int error;
@@ -791,35 +836,6 @@ void mpu_read_and_print(byte mpu_en_pin)
  Serial.print(accel_t_gyro.value.z_gyro, DEC);
  Serial.print(F(", "));
  Serial.println(F(""));
-}
-
-void setup()
-{
-
- for (byte i = 0; i < pinCount; i++)
- {
-    pinMode(pin[i], OUTPUT);
- }
-
- Serial.begin(115200);
- Serial.println(F("InvenSense MPU-6050"));
-//  Serial.println(F("June 2012"));
-
- // Initialize the 'Wire' class for the I2C-bus.
- Wire.begin();
-
-  for (byte i = 0; i < pinCount; i++)
- {
-    mpu_initialize(pin[i]);
- }
-
-}
-
-
-void loop()
-{
- mpu_read_and_print(pin[0]);
- delay(500);
 }
 
 
