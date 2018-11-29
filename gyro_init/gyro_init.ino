@@ -34,10 +34,8 @@
 // At power-up, all registers are zero, except these two:
 // Register 0x6B (PWR_MGMT_2) = 0x40 (I read zero).
 // Register 0x75 (WHO_AM_I) = 0x68.
-// 
 
 #include <Wire.h>
-
 
 // The name of the sensor is "MPU-6050".
 // For program code, I omit the '-', 
@@ -51,7 +49,7 @@
 // at 0x02 ... 0x18, but according other information 
 // the registers in that unknown area are for gain 
 // and offsets.
-// 
+
 #define MPU6050_AUX_VDDIO 0x01 // R/W
 #define MPU6050_SMPLRT_DIV 0x19 // R/W
 #define MPU6050_CONFIG 0x1A // R/W
@@ -667,11 +665,14 @@ typedef union accel_t_gyro_union
  } value;
 };
 
-// first declare an array of your pin values
+// declare an array of pin values
 byte pin[] = {2, 3, 4, 5};
+
 // then calculate it's size. Now if you add a pin it will automatically include it
 byte pinCount = sizeof(pin) / sizeof(pin[0]);
 
+
+// Set all output pins in LOW
 void output_all_low()
 {
    for (byte i = 0; i < pinCount; i++)
@@ -691,12 +692,12 @@ void setup()
 
  Serial.begin(115200);
  Serial.println(F("InvenSense MPU-6050"));
-//  Serial.println(F("June 2012"));
 
  // Initialize the 'Wire' class for the I2C-bus.
  Wire.begin();
 
-  for (byte i = 0; i < pinCount; i++)
+ // Initialize MPU-6050
+ for (byte i = 0; i < pinCount; i++)
  {
     mpu_initialize(pin[i]);
  }
@@ -803,7 +804,7 @@ void mpu_read_and_print(byte mpu_en_pin)
 
 
  // Print the raw acceleration values
-
+/*
  Serial.print(F("accel x,y,z: "));
  Serial.print(accel_t_gyro.value.x_accel, DEC);
  Serial.print(F(", "));
@@ -836,22 +837,24 @@ void mpu_read_and_print(byte mpu_en_pin)
  Serial.print(accel_t_gyro.value.z_gyro, DEC);
  Serial.print(F(", "));
  Serial.println(F(""));
+ */
 }
 
 
-// --------------------------------------------------------
-// MPU6050_read
-//
-// This is a common function to read multiple bytes 
-// from an I2C device.
-//
-// It uses the boolean parameter for Wire.endTransMission()
-// to be able to hold or release the I2C-bus. 
-// This is implemented in Arduino 1.0.1.
-//
-// Only this function is used to read. 
-// There is no function for a single byte.
-//
+/* --------------------------------------------------------
+MPU6050_read
+
+This is a common function to read multiple bytes 
+from an I2C device.
+
+It uses the boolean parameter for Wire.endTransMission()
+to be able to hold or release the I2C-bus. 
+This is implemented in Arduino 1.0.1.
+
+Only this function is used to read. 
+There is no function for a single byte.
+-------------------------------------------------------- */
+
 int MPU6050_read(int start, uint8_t *buffer, int size, int device_address)
 {
  int i, n, error;
@@ -879,25 +882,26 @@ int MPU6050_read(int start, uint8_t *buffer, int size, int device_address)
 }
 
 
-// --------------------------------------------------------
-// MPU6050_write
-//
-// This is a common function to write multiple bytes to an I2C device.
-//
-// If only a single register is written,
-// use the function MPU_6050_write_reg().
-//
-// Parameters:
-// start : Start address, use a define for the register
-// pData : A pointer to the data to write.
-// size : The number of bytes to write.
-//
-// If only a single register is written, a pointer
-// to the data has to be used, and the size is
-// a single byte:
-// int data = 0; // the data to write
-// MPU6050_write (MPU6050_PWR_MGMT_1, &c, 1);
-//
+/* --------------------------------------------------------
+MPU6050_write
+
+This is a common function to write multiple bytes to an I2C device.
+
+If only a single register is written,
+use the function MPU_6050_write_reg().
+
+Parameters:
+start : Start address, use a define for the register
+pData : A pointer to the data to write.
+size : The number of bytes to write.
+
+If only a single register is written, a pointer
+to the data has to be used, and the size is
+a single byte:
+int data = 0; // the data to write
+MPU6050_write (MPU6050_PWR_MGMT_1, &c, 1);
+-------------------------------------------------------- */
+
 int MPU6050_write(int start, const uint8_t *pData, int size, int device_address)
 {
  int n, error;
@@ -918,14 +922,15 @@ int MPU6050_write(int start, const uint8_t *pData, int size, int device_address)
  return (0); // return : no error
 }
 
-// --------------------------------------------------------
-// MPU6050_write_reg
-//
-// An extra function to write a single register.
-// It is just a wrapper around the MPU_6050_write()
-// function, and it is only a convenient function
-// to make it easier to write a single register.
-//
+/* --------------------------------------------------------
+MPU6050_write_reg
+
+An extra function to write a single register.
+It is just a wrapper around the MPU_6050_write()
+function, and it is only a convenient function
+to make it easier to write a single register.
+-------------------------------------------------------- */
+
 int MPU6050_write_reg(int reg, uint8_t data, int device_address)
 {
  int error;
