@@ -682,7 +682,9 @@ void mpu_initialize(byte mpu_en_pin)
  // Clock source at internal 8MHz
  // The device is in sleep mode.
  
- Serial.println("MPU-6050 pin %d Initializing...", mpu_en_pin);
+ Serial.print("MPU-6050 pin ");
+ Serial.print(mpu_en_pin,DEC);
+ Serial.println(" Initializing...");
 
  output_all_low();
  digitalWrite(mpu_en_pin, HIGH);
@@ -706,18 +708,12 @@ void mpu_initialize(byte mpu_en_pin)
  // Clear the 'sleep' bit to start the sensor.
  MPU6050_write_reg (MPU6050_PWR_MGMT_1, 0, 0x69);
 
- Serial.println("MPU-6050 pin %d Initialized!!", mpu_en_pin);
+ Serial.print("MPU-6050 pin ");
+ Serial.print(mpu_en_pin,DEC);
+ Serial.println(" Initialized!!");
  
 }
 
-void output_all_low(byte pins)
-{
-   for (byte i = 0; i < pinCount; i++)
-   {
-      digitalWrite(pin[i], LOW);
-      delay(1);
-   }
-}
 
 void mpu_read_and_print(byte mpu_en_pin)
 {
@@ -727,7 +723,8 @@ void mpu_read_and_print(byte mpu_en_pin)
 
  
  Serial.println(F(""));
- Serial.println(F("MPU-6050 %d"), mpu_en_pin);
+ Serial.print("MPU-6050 ");
+ Serial.println(mpu_en_pin,DEC);
 
  output_all_low();
  digitalWrite(mpu_en_pin, HIGH);
