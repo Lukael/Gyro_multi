@@ -667,20 +667,25 @@ typedef union accel_t_gyro_union
  } value;
 };
 
-void mpu_initialize()
+// first declare an array of your pin values
+byte pin[] = {2, 3, 4, 5};
+// then calculate it's size. Now if you add a pin it will automatically include it
+byte pinCount = sizeof(pin) / sizeof(pin[0]);
+
+void mpu_initialize(byte mpu_en_pin)
 {
-   int error;
- uint8_t c;
+  int error;
+  uint8_t c;
   // default at power-up:
  // Gyro at 250 degrees second
  // Acceleration at 2g
  // Clock source at internal 8MHz
  // The device is in sleep mode.
- //
- digitalWrite(2, HIGH);
- digitalWrite(3, LOW);
- digitalWrite(4, LOW);
- digitalWrite(5, LOW);
+ 
+ Serial.println("MPU-6050 pin %d Initializing...", mpu_en_pin);
+
+ output_all_low();
+ digitalWrite(mpu_en_pin, HIGH);
 
  error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1, 0x69);
  Serial.print(F("WHO_AM_I : "));
@@ -700,76 +705,32 @@ void mpu_initialize()
 
  // Clear the 'sleep' bit to start the sensor.
  MPU6050_write_reg (MPU6050_PWR_MGMT_1, 0, 0x69);
+
+ Serial.println("MPU-6050 pin %d Initialized!!", mpu_en_pin);
+ 
 }
 
-void mpu_initialize2()
+void output_all_low(byte pins)
 {
-   int error;
- uint8_t c;
-  // default at power-up:
- // Gyro at 250 degrees second
- // Acceleration at 2g
- // Clock source at internal 8MHz
- // The device is in sleep mode.
- //
- digitalWrite(3, HIGH);
- digitalWrite(2, LOW);
- digitalWrite(4, LOW);
- digitalWrite(5, LOW);
-
- error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1, 0x69);
- Serial.print(F("WHO_AM_I : "));
- Serial.print(c,HEX);
- Serial.print(F(", error = "));
- Serial.println(error,DEC);
-
- // According to the datasheet, the 'sleep' bit
- // should read a '1'.
- // That bit has to be cleared, since the sensor
- // is in sleep mode at power-up. 
- error = MPU6050_read (MPU6050_PWR_MGMT_1, &c, 1, 0x69);
- Serial.print(F("PWR_MGMT_1 : "));
- Serial.print(c,HEX);
- Serial.print(F(", error = "));
- Serial.println(error,DEC);
-
- // Clear the 'sleep' bit to start the sensor.
- MPU6050_write_reg (MPU6050_PWR_MGMT_1, 0, 0x69);
+   for (byte i = 0; i < pinCount; i++)
+   {
+      digitalWrite(pin[i], LOW);
+      delay(1);
+   }
 }
 
-
-void setup()
-{
-
- pinMode(2, OUTPUT);
- pinMode(3, OUTPUT);
- pinMode(4, OUTPUT);
- pinMode(5, OUTPUT);
-
- Serial.begin(115200);
- Serial.println(F("InvenSense MPU-6050"));
- Serial.println(F("June 2012"));
-
- // Initialize the 'Wire' class for the I2C-bus.
- Wire.begin();
-
- mpu_initialize();
- mpu_initialize2();
-
-}
-
-
-void loop()
+void mpu_read_and_print(byte mpu_en_pin)
 {
  int error;
  double dT;
  accel_t_gyro_union accel_t_gyro;
 
- digitalWrite(3, HIGH);
- digitalWrite(2, LOW);
  
  Serial.println(F(""));
- Serial.println(F("MPU-6050"));
+ Serial.println(F("MPU-6050 %d"), mpu_en_pin);
+
+ output_all_low();
+ digitalWrite(mpu_en_pin, HIGH);
 
  // Read the raw values.
  // Read 14 bytes at once, 
@@ -833,76 +794,34 @@ void loop()
  Serial.print(accel_t_gyro.value.z_gyro, DEC);
  Serial.print(F(", "));
  Serial.println(F(""));
+}
 
- delay(500);
- 
- digitalWrite(2, HIGH);
- digitalWrite(3, LOW);
- 
- Serial.println(F(""));
- Serial.println(F("MPU-6050-2"));
+void setup()
+{
 
- // Read the raw values.
- // Read 14 bytes at once, 
- // containing acceleration, temperature and gyro.
- // With the default settings of the MPU-6050,
- // there is no filter enabled, and the values
- // are not very stable.
- 
- error = MPU6050_read (MPU6050_ACCEL_XOUT_H, (uint8_t *) &accel_t_gyro, sizeof(accel_t_gyro), 0x69);
- Serial.print(F("MPU-6050-2 Read accel, temp and gyro, error = "));
- Serial.println(error,DEC);
+ for (byte i = 0; i < pinCount; i++)
+ {
+    pinMode(pin[i], OUTPUT);
+ }
 
+ Serial.begin(115200);
+ Serial.println(F("InvenSense MPU-6050"));
+//  Serial.println(F("June 2012"));
 
- // Swap all high and low bytes.
- // After this, the registers values are swapped, 
- // so the structure name like x_accel_l does no 
- // longer contain the lower byte.
+ // Initialize the 'Wire' class for the I2C-bus.
+ Wire.begin();
 
- SWAP (accel_t_gyro.reg.x_accel_h, accel_t_gyro.reg.x_accel_l);
- SWAP (accel_t_gyro.reg.y_accel_h, accel_t_gyro.reg.y_accel_l);
- SWAP (accel_t_gyro.reg.z_accel_h, accel_t_gyro.reg.z_accel_l);
- SWAP (accel_t_gyro.reg.t_h, accel_t_gyro.reg.t_l);
- SWAP (accel_t_gyro.reg.x_gyro_h, accel_t_gyro.reg.x_gyro_l);
- SWAP (accel_t_gyro.reg.y_gyro_h, accel_t_gyro.reg.y_gyro_l);
- SWAP (accel_t_gyro.reg.z_gyro_h, accel_t_gyro.reg.z_gyro_l);
+  for (byte i = 0; i < pinCount; i++)
+ {
+    mpu_initialize(pin[i]);
+ }
+
+}
 
 
- // Print the raw acceleration values
-
- Serial.print(F("MPU-6050-2 accel x,y,z: "));
- Serial.print(accel_t_gyro.value.x_accel, DEC);
- Serial.print(F(", "));
- Serial.print(accel_t_gyro.value.y_accel, DEC);
- Serial.print(F(", "));
- Serial.print(accel_t_gyro.value.z_accel, DEC);
- Serial.println(F(""));
-
-
- // The temperature sensor is -40 to +85 degrees Celsius.
- // It is a signed integer.
- // According to the datasheet: 
- // 340 per degrees Celsius, -512 at 35 degrees.
- // At 0 degrees: -512 - (340 * 35) = -12412
-
- Serial.print(F("MPU-6050-2 temperature: "));
- dT = ( (double) accel_t_gyro.value.temperature + 12412.0) / 340.0;
- Serial.print(dT, 3);
- Serial.print(F(" degrees Celsius"));
- Serial.println(F(""));
-
-
- // Print the raw gyro values.
-
- Serial.print(F("MPU-6050-2 gyro x,y,z : "));
- Serial.print(accel_t_gyro.value.x_gyro, DEC);
- Serial.print(F(", "));
- Serial.print(accel_t_gyro.value.y_gyro, DEC);
- Serial.print(F(", "));
- Serial.print(accel_t_gyro.value.z_gyro, DEC);
- Serial.print(F(", "));
- Serial.println(F(""));
-
+void loop()
+{
+ mpu_read_and_print(pin[0]);
  delay(500);
 }
 
