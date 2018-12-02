@@ -62,12 +62,16 @@ void setup()
 
  // Initialize the 'Wire' class for the I2C-bus.
  Wire.begin();
+ 
+ int error;
 
  // Initialize MPU-6050
  for (int i = 0; i < pinCount; i++)
  {
-    mpu_initialize(pin[i]);
-    calibrate_sensors(pin[i], base[i]);
+    error = mpu_initialize(pin[i]);
+    if(error != 0)
+      Serial.println(F("MPU-6050 not connected!"));
+    calibrate_sensors(pin[i], i);
     last[i].read_time = millis();
     last[i].x_angle = 0;
     last[i].y_angle = 0;
