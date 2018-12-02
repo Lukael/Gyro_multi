@@ -91,15 +91,15 @@ void loop()
  {
    accel_t_gyro_union accel_t_gyro;
    mpu_read_data(pin[i],(uint8_t*) &accel_t_gyro);
-   // unsigned long t_now = millis();
-   // complementary_filter(i, t_now, (uint8_t*) &accel_t_gyro);
+   unsigned long t_now = millis();
+   complementary_filter(i, t_now, (uint8_t*) &accel_t_gyro);
    delay(5);
  }
- delay(1000);
+ delay(50);
 }
 
 
-void mpu_initialize(int mpu_en_pin)
+int mpu_initialize(int mpu_en_pin)
 {
   int error;
   uint8_t c;
@@ -138,6 +138,8 @@ void mpu_initialize(int mpu_en_pin)
  Serial.print("MPU-6050 pin ");
  Serial.print(mpu_en_pin,DEC);
  Serial.println(" Initialized!!");
+
+ return error;
  
 }
 
@@ -183,8 +185,9 @@ void mpu_read_data(int mpu_en_pin, uint8_t* accel_t_gyro_ptr)
  SWAP ((*accel_t_gyro).reg.z_gyro_h, (*accel_t_gyro).reg.z_gyro_l);
 }
 
-void calibrate_sensors(int mpu_en_pin, base_data base) {
-  int                   num_readings = 10;
+void calibrate_sensors(int mpu_en_pin, int mpu_en_pin_count)
+{
+  int                   num_readings = 50;
   float                 x_accel = 0;
   float                 y_accel = 0;
   float                 z_accel = 0;
@@ -207,7 +210,7 @@ void calibrate_sensors(int mpu_en_pin, base_data base) {
     x_gyro += accel_t_gyro.value.x_gyro;
     y_gyro += accel_t_gyro.value.y_gyro;
     z_gyro += accel_t_gyro.value.z_gyro;
-    delay(100);
+    delay(50);
   }
   x_accel /= num_readings;
   y_accel /= num_readings;
@@ -217,12 +220,12 @@ void calibrate_sensors(int mpu_en_pin, base_data base) {
   z_gyro /= num_readings;
   
   // Store the raw calibration values globally
-  base.x_accel = x_accel;
-  base.y_accel = y_accel;
-  base.z_accel = z_accel;
-  base.x_gyro = x_gyro;
-  base.y_gyro = y_gyro;
-  base.z_gyro = z_gyro;
+  base[mpu_en_pin_count].x_accel = x_accel;
+  base[mpu_en_pin_count].y_accel = y_accel;
+  base[mpu_en_pin_count].z_accel = z_accel;
+  base[mpu_en_pin_count].x_gyro = x_gyro;
+  base[mpu_en_pin_count].y_gyro = y_gyro;
+  base[mpu_en_pin_count].z_gyro = z_gyro;
   
   //Serial.println("Finishing Calibration");
 }
@@ -279,9 +282,9 @@ void complementary_filter(int mpu_en_pin_count, unsigned long time, uint8_t* acc
  last[mpu_en_pin_count].gyro_z_angle = unfiltered_gyro_angle_z;
  
  Serial.println(F(""));
- Serial.print("MPU-6050 ");
+ Serial.print("MPU-6050 #");
  Serial.print(mpu_en_pin_count,DEC);
- Serial.print(F("#FIL:"));             //Filtered angle
+ Serial.print(F(" #FIL:"));             //Filtered angle
  Serial.print(angle_x, 2);
  Serial.print(F("\t  ,  "));
  Serial.print(angle_y, 2);
